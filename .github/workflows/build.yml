@@ -11,46 +11,33 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Baixar projeto
+        uses: actions/checkout@v4
 
-      - name: Instalar ferramentas
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang lld make curl unzip
+      - name: Compilar Snake para PS4
+        uses: OpenOrbis/toolchain-action@main
+        with:
+          version: v0.5.4
+          command: |
+            set -e
 
-      - name: Baixar OpenOrbis
-        run: |
-          mkdir -p sdk
-          curl -fL https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain/releases/download/v0.5.4/v0.5.4.tar.gz | tar -xz -C sdk bin/data bin/linux include lib scripts LICENSE link.x
-          echo "OO_PS4_TOOLCHAIN=$GITHUB_WORKSPACE/sdk" >> $GITHUB_ENV
+            PROJECT="$(basename "$GITHUB_WORKSPACE")"
 
-      - name: Preparar bibliotecas SDL2
-        run: |
-          curl -fL https://github.com/OpenOrbis/SDL-PS4/releases/latest/download/SDL2.tar.gz | tar -xz -C sdk
+            mkdir -p "$PROJECT"
+            cp main.cpp "$PROJECT/main.cpp"
 
-      - name: Preparar ferramentas de pacote
-        run: |
-          curl -fL https://github.com/OpenOrbis/create-gp4/releases/latest/download/binaries.tar.gz | tar -xz -C sdk
-          BASE=https://github.com/maxton/LibOrbisPkg/releases/download
-          curl -fL https://github.com/maxton/LibOrbisPkg/releases/latest/download/PkgTool.Core-linux-x64-0.2.231.zip -o pkgtool.zip
-          unzip -o pkgtool.zip -d sdk/bin/linux
-          chmod +x sdk/bin/linux/*
+            cp "$OO_PS4_TOOLCHAIN/samples/SDL2/Makefile" Makefile
+            cp -R "$OO_PS4_TOOLCHAIN/samples/SDL2/sce_sys" .
+            cp -R "$OO_PS4_TOOLCHAIN/samples/SDL2/sce_module" .
 
-      - name: Preparar projeto Snake
-        run: |
-          git clone --depth 1 https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain.git sdk-source
-          cp -r sdk-source/samples sdk/
-          mkdir -p Snake
-          mv main.cpp Snake/main.cpp
-          cp sdk-source/samples/SDL2/Makefile Makefile
-          cp -r sdk-source/samples/SDL2/sce_sys .
-          cp -r sdk-source/samples/SDL2/sce_module .
+            sed -i 's/^TITLE[[:space:]]*: =.*/TITLE := Snake PS4/' Makefile
+            sed -i 's/^TITLE[[:space:]]*:=.*/TITLE := Snake PS4/' Makefile
+            sed -i 's/^TITLE_ID[[:space:]]*:=.*/TITLE_ID := SNAK00001/' Makefile
+            sed -i 's/^CONTENT_ID[[:space:]]*:=.*/CONTENT_ID := IV0000-SNAK00001_00-SNAKEGAME000000/' Makefile
 
-      - name: Compilar jogo e gerar PKG
-        run: |
-          make
+            make
 
-      - name: Publicar pacote
+      - name: Guardar arquivo PKG
         uses: actions/upload-artifact@v4
         with:
           name: Snake-PS4
