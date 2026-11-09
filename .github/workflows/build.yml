@@ -3,24 +3,21 @@ name: Snake PS4 Build
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
-      - name: Baixar projeto
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Verificar arquivos
+      - name: Baixar OpenOrbis
         run: |
-          echo "Projeto Snake PS4 encontrado!"
-          ls -la
+          git clone --depth 1 https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain.git sdk
+          echo "OO_PS4_TOOLCHAIN=$GITHUB_WORKSPACE/sdk" >> $GITHUB_ENV
 
-      - name: Verificar código
+      - name: Verificar SDK
         run: |
-          test -f main.cpp
-          test -f Makefile
-          echo "Arquivos encontrados!"
+          ls sdk
+          echo "SDK baixado"
