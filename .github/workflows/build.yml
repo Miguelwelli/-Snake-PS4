@@ -1,3 +1,4 @@
+
 name: Snake PS4 Build
 
 on:
@@ -12,12 +13,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Instalar ferramentas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld make curl unzip
+
       - name: Baixar OpenOrbis
         run: |
-          git clone --depth 1 https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain.git sdk
+          mkdir -p sdk
+          curl -fL https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain/releases/download/v0.5.4/v0.5.4.tar.gz | tar -xz -C sdk bin/data bin/linux include lib scripts LICENSE link.x
           echo "OO_PS4_TOOLCHAIN=$GITHUB_WORKSPACE/sdk" >> $GITHUB_ENV
 
-      - name: Verificar SDK
+      - name: Preparar bibliotecas SDL2
         run: |
-          ls sdk
-          echo "SDK baixado"
+          curl -fL https://github.com/OpenOrbis/SDL-PS4/releases/latest/download/SDL2.tar.gz | tar -xz -C sdk
+
+      - name: Preparar ferramentas de pacote
+        run: |
+          curl -fL https://github.com/OpenOrbis/create-gp4/releases/latest/download/binaries.tar.gz | tar -xz -C sdk
+          BASE=https://github.com/maxton/LibOrbisPkg/releases/download
+          curl -fL https://github.com/maxton/LibOrbisPkg/releases/latest/download/PkgTool.Core-linux-x64-0.2.231.zip -o pkgtool.zip
+          unzip -o pkgtool.zip -d sdk/bin/linux
+          chmod +x sdk/bin/linux/*
+
+      - name: Preparar projeto Snake
+        run: |
+          git clone --depth 1 https://github.com/OpenOrbis/OpenOrbis-PS4-Toolchain.git sdk-source
+          cp -r sdk-source/samples sdk/
+          mkdir -p Snake
+          mv main.cpp Snake/main.cpp
+          cp sdk-source/samples/SDL2/Makefile Makefile
+          cp -r sdk-source/samples/SDL2/sce_sys .
+          cp -r sdk-source/samples/SDL2/sce_module .
+
+      - name: Compilar jogo e gerar PKG
+        run: |
+          make
+
+      - name: Publicar pacote
+        uses: actions/upload-artifact@v4
+        with:
+          name: Snake-PS4
+          path: "*.pkg"
+          if-no-files-found: error
