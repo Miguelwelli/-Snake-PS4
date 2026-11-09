@@ -1,20 +1,26 @@
-
 name: Snake PS4 Build
 
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Baixar projeto
+      - name: Baixar o Snake
         uses: actions/checkout@v4
 
-      - name: Compilar Snake para PS4
+      - name: Baixar exemplos oficiais OpenOrbis
+        uses: actions/checkout@v4
+        with:
+          repository: OpenOrbis/OpenOrbis-PS4-Toolchain
+          path: oosdk
+
+      - name: Compilar e gerar PKG
         uses: OpenOrbis/toolchain-action@main
         with:
           version: v0.5.4
@@ -26,18 +32,19 @@ jobs:
             mkdir -p "$PROJECT"
             cp main.cpp "$PROJECT/main.cpp"
 
-            cp "$OO_PS4_TOOLCHAIN/samples/SDL2/Makefile" Makefile
-            cp -R "$OO_PS4_TOOLCHAIN/samples/SDL2/sce_sys" .
-            cp -R "$OO_PS4_TOOLCHAIN/samples/SDL2/sce_module" .
+            cp oosdk/samples/SDL2/Makefile Makefile
+            cp -R oosdk/samples/SDL2/sce_sys .
+            cp -R oosdk/samples/SDL2/sce_module .
 
-            sed -i 's/^TITLE[[:space:]]*: =.*/TITLE := Snake PS4/' Makefile
-            sed -i 's/^TITLE[[:space:]]*:=.*/TITLE := Snake PS4/' Makefile
-            sed -i 's/^TITLE_ID[[:space:]]*:=.*/TITLE_ID := SNAK00001/' Makefile
-            sed -i 's/^CONTENT_ID[[:space:]]*:=.*/CONTENT_ID := IV0000-SNAK00001_00-SNAKEGAME000000/' Makefile
+            sed -i -E 's/^TITLE[[:space:]]*:=.*/TITLE       := Snake PS4/' Makefile
+            sed -i -E 's/^TITLE_ID[[:space:]]*:=.*/TITLE_ID    := SNAK00001/' Makefile
+            sed -i -E 's/^CONTENT_ID[[:space:]]*:=.*/CONTENT_ID := IV0000-SNAK00001_00-SNAKEGAME000000/' Makefile
 
             make
 
-      - name: Guardar arquivo PKG
+            ls -lh *.pkg
+
+      - name: Salvar PKG
         uses: actions/upload-artifact@v4
         with:
           name: Snake-PS4
