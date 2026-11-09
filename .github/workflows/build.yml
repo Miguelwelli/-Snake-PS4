@@ -1,0 +1,26 @@
+name: Snake PS4 Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Verificar arquivos
+        run: |
+          echo "Projeto Snake PS4 encontrado!"
+          ls -la
+
+      - name: Verificar código
+        run: |
+          test -f main.cpp
+          test -f Makefile
+          echo "Arquivos encontrados!"
