@@ -1,11 +1,10 @@
 TOOLCHAIN := $(OO_PS4_TOOLCHAIN)
-PROJDIR := $(shell basename $(CURDIR))
-INTDIR := $(PROJDIR)/x64/Debug
-
-LIBS := -lc -lkernel -lc++ -lSceUserService -lSceVideoOut -lSceAudioOut -lScePad -lSceSysmodule -lSDL2
+INTDIR := build
 
 CXX := clang++
 LD := ld.lld
+
+LIBS := -lc -lkernel -lc++ -lSceUserService -lSceVideoOut -lSceAudioOut -lScePad -lSceSysmodule -lSDL2
 
 CXXFLAGS := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c -isysroot $(TOOLCHAIN) -isystem $(TOOLCHAIN)/include -isystem $(TOOLCHAIN)/include/c++/v1
 
